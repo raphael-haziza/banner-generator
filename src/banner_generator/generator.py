@@ -11,22 +11,22 @@ class BannerGenerator:
 
         return blank_image
 
-    def write_text(self, image, color):
+    def write_text(self, image, color, offset=(0,0)):
         config_font = ImageFont.truetype(self.config.font_path, self.config.font_size)
         draw = ImageDraw.Draw(image)
 
         size_tuple = draw.textbbox((0,0), self.config.text, config_font)
 
-        centered_width = (self.config.width - (size_tuple[2] - size_tuple[0])) // 2 # (image_width - (right - left)) // 2 to center it on the horizontal
-        centered_height = (self.config.height - (size_tuple[3] - size_tuple[1])) // 2 # (image_height - (bottom - top)) // 2 to center it on the vertical
+        centered_width = (self.config.width - (size_tuple[2] - size_tuple[0])) // 2 + offset[0] # (image_width - (right - left)) // 2 to center it on the horizontal
+        centered_height = (self.config.height - (size_tuple[3] - size_tuple[1])) // 2 + offset[1] # (image_height - (bottom - top)) // 2 to center it on the vertical
 
         draw.text((centered_width, centered_height), self.config.text, color, config_font)
 
         return image
 
-    def apply_glow(self, image, opacity_glow, glow_size):
+    def apply_glow(self, image, opacity_glow, glow_size, offset=(0,0)):
         glow_image = self.create_image("RGBA", (0, 0, 0, 0))
-        glow_image = self.write_text(glow_image, (255, 255, 255, opacity_glow))
+        glow_image = self.write_text(glow_image, (255, 255, 255, opacity_glow), offset=offset)
         glow_filter = ImageFilter.GaussianBlur(glow_size) # glow effect using gaussian blur
         glow_image = glow_image.filter(glow_filter)
 
@@ -38,11 +38,12 @@ def main():
     generator = BannerGenerator(config)
 
     temp_image = generator.create_image("RGBA", (0, 0, 0, 255))
-    temp_image = generator.apply_glow(temp_image, 255, 5)
-    temp_image = generator.apply_glow(temp_image, 235, 10)
-    temp_image = generator.apply_glow(temp_image, 195, 25)
-    temp_image = generator.apply_glow(temp_image, 165, 35)
-    temp_image = generator.write_text(temp_image, (255, 255, 255))
+    temp_image = generator.apply_glow(temp_image, 255, 45, offset=(-10,5))
+    temp_image = generator.apply_glow(temp_image, 235, 60, offset=(-5,0))
+    temp_image = generator.apply_glow(temp_image, 195, 95, offset=(0,5))
+    temp_image = generator.apply_glow(temp_image, 165, 145, offset=(5,10))
+    temp_image = generator.write_text(temp_image, (0, 0, 0), offset=(-10, 10))
+    temp_image = generator.write_text(temp_image, (255, 255, 255), offset=(10, -10))
 
     current_date = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     temp_image.save("output/" + current_date + "_" + str(config.width) + "x" + str(config.height) + "_" + config.text + "." + config.format)
